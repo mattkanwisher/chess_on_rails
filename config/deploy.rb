@@ -8,7 +8,7 @@ set :use_sudo, false
 default_run_options[:pty] = true
 set :repository,  "git@github.com:chicagogrooves/chess_on_rails.git"
 set :scm, "git"
-set :branch, "master"
+set :branch, "fix_active_record"
 ssh_options[:forward_agent] = true
 set :deploy_via, :remote_cache
 set :deploy_to, "/home/chicagogrooves/www.chessonrails.com"

@@ -7,17 +7,17 @@ describe Move do
   end
   attr_accessor :match
 
-  describe 'life cycle' do
-    it 'should save a valid move' do
-      move = Move.new(:from_coord => 'd2', :to_coord => 'd4')
-      move.stubs(:valid?).returns(true)
-      match.moves << move
-      match.reload.moves.count.should == 1
+  describe 'Capturing' do
+    it 'should populate the captured_piece coordinate' do
+      match = matches(:ready_to_capture)
+      match.moves << move = Move.new(:from_coord => 'e4', :to_coord => 'd5')
+
+      move.captured_piece_coord.should == 'd5'
+      move.notation.should == 'exd5'
     end
   end
 
-  describe 'Validations with known to and from coordinates' do
-
+  describe 'Validation' do
     it 'should disallow a move with nonsensical coordinates' do
       match.moves << move = Move.new(:from_coord => '4d', :to_coord => 'd4')
       move.should_not be_valid

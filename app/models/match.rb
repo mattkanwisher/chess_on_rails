@@ -8,12 +8,12 @@ class Match < ActiveRecord::Base
   # reference to this match instance, so it can use our history to validate.
   # After adding we store the new board instance, check for checkmate, and store any move queue
   has_many :moves,   :order => 'move_num',
-                     :before_add => Proc.new{ |m, mv| mv.match = m },
-                     :after_add  => [:save_board, :play_queued_moves]
-                     
-
+                     :include => :match,
+                     :before_add => :set_pre_board_on_move,
+                     :after_add  => :get_post_board_from_move
+  
   belongs_to :winning_player, :class_name => 'Player', :foreign_key => 'winning_player'
-
+                     
   named_scope :active,    :conditions => { :active => true }
   named_scope :completed, :conditions => { :active => false }
 
@@ -37,18 +37,38 @@ class Match < ActiveRecord::Base
   end
 
   # The first gameplay record is player1 aka white, and the second is player2 aka black
-  def player1;  @player1 ||= gameplays[0].player  ;end
-  def player2;  @player2 ||= gameplays[1].player  ;end
-  alias :white :player1;  alias :black :player2
+  def white;  @player1 ||= gameplays[:white].player ; end ;    alias :player1 :white  
+  def black;  @player2 ||= gameplays[:black].player ; end ;    alias :player2 :black
 
-  # The current board of this match.
+  # Answers whether the object passed is a player in this match
+  def is_playing? plyr
+    plyr == self.player1 || plyr == self.player2
+  end
+
+  # Called by before_add
+  def set_pre_board_on_move mv
+    $stderr.puts "set_pre_board_on_move\n#{self.board}"
+    mv.board_before = self.board
+  end
+
+  # Called by after_add
+  def get_post_board_from_move mv
+    $stderr.puts "set_post_board_on_move"
+    self.boards.store( @boards.keys.max + 1, mv.board_after )
+  end
+
   def board
+    unless @boards && @boards.size == moves.length
+      #b = boards(true) # force recalc
+    end
     boards[ boards.keys.max ]
   end
 
   # The series of boards this match has been played through, a hash keyed on the move number.
-  def boards
-    return @boards if @boards
+  def boards(force_recalc = false)
+    # $stderr.puts "Opening debugger to troubleshoot Match#boards ! TODO - give each move its own board !"
+    # debugger
+    return @boards if @boards && ! force_recalc
 
     @boards = { 0 => Board.new( self[:start_pos] ) }
     moves.each_with_index do |mv, idx|
@@ -72,10 +92,12 @@ class Match < ActiveRecord::Base
   end
 
   # Cache this board and make it the most recent one
-  def save_board( last_move )
-    return false unless last_move.errors.empty?
-    self.boards.store( @boards.keys.max + 1, self.board.dup.play_move!( last_move ) )
-  end
+#  def save_board( last_move )
+#    $stderr.puts "#{last_move.infer_coordinates_from_notation} #{last_move.valid?}"
+#    return false unless last_move.infer_coordinates_from_notation && last_move.valid?
+#    last_move.board_after = self.board.dup.play_move!( last_move )
+#    self.boards.store( @boards.keys.max + 1, self.board_after )
+#  end
 
   # as long as the game starts at the beginning, white goes first
   def first_to_move

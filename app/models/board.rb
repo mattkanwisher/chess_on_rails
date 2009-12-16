@@ -75,6 +75,21 @@ class Board < Hash
   # Implements the rules of play on this Board instance, for the (presumably
   # allowed) move given.
   def play_move!( m )
+    $stderr.puts self.to_s
+
+    raise MoveInvalid, m.errors.full_messages unless m.errors.empty?
+
+    unless m.notation_inferred
+      m.infer_coordinates_from_notation(self) rescue nil
+    end
+
+    raise MissingCoord, m.inspect unless begin
+      m && m.respond_to?(:from_coord) && !m.from_coord.blank? &&
+           m.respond_to?(:to_coord)   && !m.to_coord.blank?
+    end
+    raise PieceNotFound, [m.inspect,self.inspect].join("\n") if self[m.from_coord.to_sym].nil?
+
+    # locally cache this information
     from_coord = m.from_coord.to_sym
     to_coord = m.to_coord.to_sym
     captured_piece_coord = captured_piece_coord && m.captured_piece_coord.to_sym
@@ -84,9 +99,9 @@ class Board < Hash
     if captured_piece_coord
       deleted_pieces << self.delete(captured_piece_coord)
     else
-      deceased = self.delete(to_coord)
-      graveyard << deceased if deceased
-      m.captured_piece_coord ||= to_coord.to_s
+      if deceased = self.delete(to_coord)
+        graveyard << deceased
+      end
     end
 
     piece_moved = self.delete(from_coord)
@@ -130,8 +145,8 @@ class Board < Hash
       self.delete(m.to_coord)
       self[m.to_coord] = promoted_piece
     end
-    
-    self
+
+    m.board_after = self
   end
  
   # returns a copy of self with move played
