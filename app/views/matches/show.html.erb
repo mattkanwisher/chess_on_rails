@@ -15,19 +15,55 @@
 <script id="invoke_next_move_poller_if_your_move" type="text/javascript">
  //<![CDATA[
   //the instance of this_updater is registered so it can be destroyed when it is your move, and theres no need to poll.
-<% if ! your_turn %>
-  this_updater = new PeriodicalExecuter(
-    function(){
-      new Ajax.Request(
-        next_move_url, 
-        {asynchronous:true, evalScripts:true, method:'get'} 
-      )
-    }, 10
-  )
-<% end %>
 //]]>
 </script>
 <% end %>
+
+
+<script id="websocket">
+
+var match_id = <%= @match.id %>;
+
+if(!("WebSocket" in window)) {
+  alert("Sorry, the build of your browser does not support WebSockets. Please use latest Chrome or Webkit nightly. Going to back to polling");
+
+
+  <% if ! your_turn %>
+    this_updater = new PeriodicalExecuter(
+      function(){
+        new Ajax.Request(
+          next_move_url, 
+          {asynchronous:true, evalScripts:true, method:'get'} 
+        )
+      }, 10
+    )
+  <% end %>
+
+}
+else {
+  
+  ws = new WebSocket("ws://localhost:8080/");
+  ws.onmessage = function(evt) { 
+    alert(evt.data);
+    data = eval("(" + evt.data + ")");
+    if( match_id != data.match)  {
+        alert('yuk getting data from another match');
+    }
+    
+   new Ajax.Request(
+      "/matches/" +match_id + "/status?move=" + data.move, 
+      {asynchronous:true, evalScripts:true, method:'get'} 
+    );
+  };
+  ws.onclose = function() {
+    alert("socket closed");
+  };
+  ws.onopen = function() {
+    //alert("connected...");
+  }
+ };
+</script>
+
 
 <div id="board_region">
   <!-- TODO better visuals for move_indicator - paul -->

@@ -3,6 +3,8 @@ ActionController::Routing::Routes.draw do |map|
   # The priority is based upon order of creation: first created -> highest priority.
 
   # Default routes
+  map.signup '/test_message', :controller => 'matches', :action => 'test_message'
+    
   map.root :controller => "authentication"
 
   #allow moving from CURL - Although GET generally not acceptable, post won't work without the forgery protection

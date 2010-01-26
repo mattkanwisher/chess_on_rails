@@ -4,8 +4,8 @@ development:
   adapter: mysql
   host: localhost
   database: chessonrails_development
-  username: chessonrails
-  password: ch3550nrails
+  username: root
+  password: 
 
 test:
   #use either sqllite section or mysql 

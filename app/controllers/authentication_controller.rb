@@ -26,6 +26,8 @@ class AuthenticationController < ApplicationController
   def login
     return unless request.post?
     
+    puts "params[:]#{params.inspect}--#{params[:email]}"
+    
     user = User.find_by_email_and_security_phrase( params[:email], params[:security_phrase] )
     flash[:notice] = "Your credentials do not check out." and return unless user 
 

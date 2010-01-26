@@ -5,3 +5,14 @@ Dean Radcliffe developed it out of his love of Chess, and growing appreciation o
 Priorities are on 100% Agile best practice compliance, natural mappings of code to world, brevity when possible, and finally most idiomatic and Restful. Of course, that it is fun and educational to play and read the source code of is important to me as well, but for that I require the involvement of individuals like yourselves to get involved and provide feedback. 
 
 Anyone interested in helping, of particular interest lately is the playability of the game on mobile devices - Blackberry Pearl and IPhone particularly
+
+
+====== Modified branch adds  (by Matthew Kanwisher)
+
+-Websocket server written in ruby -- See ruby_websocket_server --- this is a port of  http://github.com/rubenfonseca/twitter-amqp-websocket-example
+
+-Modified chess client that supports websockets (for Chrome)
+
+--TODO: Remove refreshing of page, and remove RJS templates and more more knowledge to the frontend
+--TODO: Node.Js Websocket server example
+--TODO: WebGL interface ;) 

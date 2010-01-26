@@ -1,3 +1,5 @@
+require 'mq'
+
 class MatchesController < ApplicationController
   before_filter :authorize
 
@@ -30,6 +32,12 @@ class MatchesController < ApplicationController
     @match = Match.find( params[:id] )
     @match.resign( current_player )
     redirect_to :action => 'index'
+  end
+
+  def test_message
+      send_amqp("chess", {:match => 1, :move => 1}.to_json)
+      render :text => "done"
+      
   end
 
   # Recieves the POST to create a new match
@@ -91,9 +99,13 @@ class MatchesController < ApplicationController
     
     @match.moves << @move = Move.new( params[:move] ) # saves automatically
     
+    send_amqp( "chess", {:match => @match.id, :move => @move.id}.to_json)
+    
     unless @move.errors.empty?
       flash[:move_error] = @move.errors.full_messages * "\n"
     end
+
+    
 
     #unceremonious way of saying you just ended the game 
     #redirect_to( :controller => 'match', :action => 'index' ) and return unless @match.active
@@ -104,6 +116,20 @@ protected
   def display_error(ex)
     flash[:move_error] = Exception === ex ? ex.message : ex.to_s
     redirect_to( match_url(@match.id) ) and return if @match
+  end
+
+  def send_amqp(queue, message)
+      AMQP.start(:host => 'localhost') do
+        chess_q = MQ.new.fanout(queue)
+
+
+        chess_q.publish(message)
+        puts "publishing event"
+
+        AMQP.stop do
+            EM.stop
+        end
+      end
   end
 
 end
